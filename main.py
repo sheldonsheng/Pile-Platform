@@ -46,7 +46,7 @@ def pile_capacity():
         print("Please input a table of soil parameters in project file.")
 #读取土层参数
 
-    for i in range(1, 101):
+    for i in range(1, 2):
         try:
             f = open('BH' + str(i) + '.csv', 'r')
             df = pd.read_csv(f, index_col='info')
@@ -54,26 +54,24 @@ def pile_capacity():
             df['soil_thk']= df['bottom_level'].shift(1) - df['bottom_level']
 #计算桩周土层厚度：
             df['judge_pile_top_level'] = (Pile.top_level > df['bottom_level']) & (Pile.top_level <= df['bottom_level'].shift(1))
-            for value in df['judge_pile_top_level']:
-                print(df['judge_pile_top_level'])
-                print('--------------------------')
-                if value == True:
-                    print('True')
-                    print('**********************')
-                    # df['soil_thk_around_pile_1'] = Pile.top_level - df['bottom_level']
-                # elif value == False:
-                #     df['soil_thk_around_pile_1'] = df['bottom_level'].shift(1) - df['bottom_level']
+            df['soil_thk_around_pile'] = df['soil_thk']
+            for n in range(0, len(df['judge_pile_top_level'])):
+                    if df['judge_pile_top_level'].iloc[n] == True:
+                        df['soil_thk_around_pile'].iloc[n] = Pile.top_level - df['bottom_level'].iloc[n]
+                    else:
+                        df['soil_thk_around_pile'].iloc[n] = df['bottom_level'].shift(1).iloc[n] - df['bottom_level'].iloc[n]
+            print(df)
             #判断桩顶位置
 
-            df['judge_pile_toe_level'] = (Pile.toe_level < df['bottom_level'].shift(1)) & (Pile.toe_level >= df['bottom_level'])
-            for value in df['judge_pile_toe_level']:
-                if value:
-                    df['soil_thk_around_pile_2'] = df['bottom_level'].shift(1) - Pile.toe_level
-                else:
-                    df['soil_thk_around_pile_2'] = df['bottom_level'].shift(1) - df['bottom_level']
+            # df['judge_pile_toe_level'] = (Pile.toe_level < df['bottom_level'].shift(1)) & (Pile.toe_level >= df['bottom_level'])
+            # for value in df['judge_pile_toe_level']:
+                # if value:
+                #     df['soil_thk_around_pile_2'] = df['bottom_level'].shift(1) - Pile.toe_level
+                # else:
+                #     df['soil_thk_around_pile_2'] = df['bottom_level'].shift(1) - df['bottom_level']
             #判断桩底位置
 
-            # print(df[['judge_pile_top_level', 'soil_thk_around_pile_1']])
+            # print(df[['soil_thk', 'judge_pile_top_level', 'soil_thk_around_pile_1']])
             # print(df[['judge_pile_toe_level', 'soil_thk_around_pile_2']])
         except FileNotFoundError:
             pass
