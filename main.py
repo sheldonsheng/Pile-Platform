@@ -19,7 +19,7 @@ class Bored_Pile:
         self.toe_level = top_level - l
 
 
-Pile = Bored_Pile(1, 20, 1)
+Pile = Bored_Pile(1, 20, 4.5)
 #TODO: User Input
 
 # 表1 - 后注浆桩侧增强系数、后注浆桩端增强系数下限
@@ -45,36 +45,46 @@ def pile_capacity():
     except FileNotFoundError:
         print("Please input a table of soil parameters in project file.")
 #读取土层参数
-
-    for i in range(1, 2):
+    for i in range(1, 101):
         try:
             f = open('BH' + str(i) + '.csv', 'r')
             df = pd.read_csv(f, index_col='info')
 #读取土层信息,计算各土层厚度：
             df['soil_thk']= df['bottom_level'].shift(1) - df['bottom_level']
 #计算桩周土层厚度：
-            df1 = (Pile.top_level < df['bottom_level']) & (Pile.top_level < df['bottom_level'].shift(1))
-            print(df1)
-            df2 = (Pile.toe_level > df['bottom_level']) & (Pile.toe_level > df['bottom_level'].shift(1))
-            print(df2)
-            df['judge'] = df1 | df2
-            judge = df['judge'].values
+            df1 = (Pile.top_level < df['bottom_level']) & (Pile.top_level < df['bottom_level'].shift(1)) #判断某一层土的层顶和层底标高是否都高于桩顶标高
+            df2 = (Pile.toe_level > df['bottom_level']) & (Pile.toe_level > df['bottom_level'].shift(1)) #判断某一层土的层顶和层底标高是否都低于桩底标高
+            df['judge'] = df1 | df2 #所有高于桩顶和低于桩底的桩侧土层，判断为False，否则为True
+            judge = df['judge'].values #将judge列转化为列表
             pile_top_list = []
             pile_toe_list = []
             for n in range(len(df['bottom_level'])):
-                pile_top_list.append(Pile.top_level)
-                pile_toe_list.append(Pile.toe_level)
-            bottom_level_list_shift1 = df['bottom_level'].shift(1).values
-            bottom_level_list = df['bottom_level'].values
-            a = np.array([pile_top_list, bottom_level_list_shift1])
-            b = np.array([pile_toe_list, bottom_level_list])
-            df['soil_thk_around_pile'] = np.where(judge, 0, a.min(0) - b.max(0))
-            print(df)
+                pile_top_list.append(Pile.top_level) #创建一个列表，每个元素均为桩顶标高，列表长度为土层数
+                pile_toe_list.append(Pile.toe_level) #创建一个列表，每个元素均为桩底标高，列表长度为土层数
+            bottom_level_list_shift1 = df['bottom_level'].shift(1).values #层顶标高转化为列表
+            bottom_level_list = df['bottom_level'].values #层底标高转化为列表
+            a = np.array([pile_top_list, bottom_level_list_shift1]) #将桩顶标高与土层层顶标高生成一个array
+            b = np.array([pile_toe_list, bottom_level_list]) #将桩底标高与土层层底标高生成一个array
+            df['soil_thk_around_pile'] = np.where(judge, 0, a.min(0) - b.max(0)) # 将a、b两个array竖向元素分别取小/取大，相减得到每层桩侧土层厚度
+            BH_soil_group = df.groupby(['info']).sum() #创建新表格BH_soil_group，将同名土层归类，层厚求和
+            BH_soil_group['skin_friction'] = soil_parameters['bored_pile_fsi'] * BH_soil_group['soil_thk_around_pile'] #计算并存储桩侧膜阻力于表格BH_soil_group中
+            df3 = pd.DataFrame()
+            df3['pile_tip_position'] = (Pile.toe_level >= df['bottom_level']) & (Pile.toe_level <= df['bottom_level'].shift(1))#判断桩底在哪一层土层中，生成一个布尔型列
+            judge_2 = df3.groupby(['info']).any().values
+            pile_tip_area = 3.14 * Pile.dia ** 2 / 4 #计算桩端面积
+            BH_soil_group['tip_support_col'] = np.where(judge_2, 1, 0) #生成一列辅助列，系数桩端所在土层为1，其余为0
+            BH_soil_group['tip_capacity'] = soil_parameters['bored_pile_fp'] * pile_tip_area * BH_soil_group['tip_support_col'] #计算桩端阻力列
+            Quk = BH_soil_group['skin_friction'].sum() + BH_soil_group['tip_capacity'].sum()
+            Quk_summarized_table = []
+            Quk_summarized_table.append(Quk)
+            print(Quk_summarized_table)
 
         except FileNotFoundError:
             pass
 
-#todo:cal pile capacity of each pile
+
+
+
 
 
 pile_capacity()
