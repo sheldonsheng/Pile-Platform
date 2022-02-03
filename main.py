@@ -22,6 +22,7 @@ df_grout_upper = pd.DataFrame({'mud': [1.3, 0], 'clay/silt': [1.8, 2.5], 'silty_
 Pile_length_list = []
 Quk_list = []
 Ra_list = []
+BH = []
 
 
 class Bored_Pile:
@@ -46,6 +47,8 @@ class Bored_Pile:
         for i in range(1, 101):
             try:
                 f = open('BH' + str(i) + '.csv', 'r')
+                BH.append('BH' + str(i))
+                print(BH)
                 df = pd.read_csv(f, index_col='info')
                 # 读取土层信息,计算各土层厚度：
                 df['soil_thk'] = df['bottom_level'].shift(1) - df['bottom_level']
@@ -77,12 +80,12 @@ class Bored_Pile:
                 BH_soil_group['tip_support_col'] = np.where(judge_2, 1, 0)  # 生成一列辅助列，系数桩端所在土层为1，其余为0
                 BH_soil_group['tip_capacity'] = soil_parameters['bored_pile_fp'] * pile_tip_area * BH_soil_group[
                     'tip_support_col']  # 计算桩端阻力列
-                Quk = BH_soil_group['skin_friction'].sum() + BH_soil_group['tip_capacity'].sum()
+                Quk = BH_soil_group['skin_friction'].sum() + BH_soil_group['tip_capacity'].sum() #求单桩极限承载力
 
                 Pile_length_list.append(self.l)
                 Quk_list.append(Quk)
                 Ra_list.append(Quk / 2)
-
+                BH.append('BH' + str(i))
             except FileNotFoundError:
                 pass
 
@@ -98,6 +101,7 @@ def pile_analyze():
     for l in range(L_min, L_max + 1, 1):
         Bored_Pile(D, l, level).pile_capacity()
     summary_table = pd.DataFrame({'桩长L': Pile_length_list, 'Quk': Quk_list, 'Ra': Ra_list})
+
     print(summary_table)
 
 
