@@ -84,7 +84,6 @@ class Bored_Pile:
                 Quk_list.append(Quk)
                 Ra_list.append(Quk / 2)
                 single_table = pd.DataFrame({'BH': BH, 'L': Pile_length_list, 'Quk': Quk_list, 'Ra': Ra_list})
-                # print(single_table)
             except FileNotFoundError:
                 return single_table
 
