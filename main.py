@@ -2,7 +2,7 @@
 # -*-coding: utf-8 -*-
 import pandas as pd
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import math
 
 
@@ -47,8 +47,6 @@ class Bored_Pile:
         for i in range(1, 101):
             try:
                 f = open('BH' + str(i) + '.csv', 'r')
-                BH.append('BH' + str(i))
-                print(BH)
                 df = pd.read_csv(f, index_col='info')
                 # 读取土层信息,计算各土层厚度：
                 df['soil_thk'] = df['bottom_level'].shift(1) - df['bottom_level']
@@ -71,7 +69,7 @@ class Bored_Pile:
                 df['soil_thk_around_pile'] = np.where(judge, 0, a.min(0) - b.max(0))  # 将a、b两个array竖向元素分别取小/取大，相减得到每层桩侧土层厚度
                 BH_soil_group = df.groupby(['info']).sum()  # 创建新表格BH_soil_group，将同名土层归类，层厚求和
                 BH_soil_group['skin_friction'] = soil_parameters['bored_pile_fsi'] * BH_soil_group[
-                    'soil_thk_around_pile']  # 计算并存储桩侧膜阻力于表格BH_soil_group中
+                    'soil_thk_around_pile'] * 3.14 * self.dia # 计算并存储桩侧膜阻力于表格BH_soil_group中
                 df3 = pd.DataFrame()
                 df3['pile_tip_position'] = (self.toe_level >= df['bottom_level']) & (
                             self.toe_level <= df['bottom_level'].shift(1))  # 判断桩底在哪一层土层中，生成一个布尔型列
@@ -81,28 +79,52 @@ class Bored_Pile:
                 BH_soil_group['tip_capacity'] = soil_parameters['bored_pile_fp'] * pile_tip_area * BH_soil_group[
                     'tip_support_col']  # 计算桩端阻力列
                 Quk = BH_soil_group['skin_friction'].sum() + BH_soil_group['tip_capacity'].sum() #求单桩极限承载力
-
+                BH.append('BH' + str(i))
                 Pile_length_list.append(self.l)
                 Quk_list.append(Quk)
                 Ra_list.append(Quk / 2)
-                BH.append('BH' + str(i))
+                single_table = pd.DataFrame({'BH': BH, 'L': Pile_length_list, 'Quk': Quk_list, 'Ra': Ra_list})
+                # print(single_table)
             except FileNotFoundError:
-                pass
+                return single_table
 
 
-D = 1
-L_min = 18
-L_max = 20
-level = 4.5
+def pile_length_analyze(L_min_input, L_max_input, D_input, level_input): #对指定桩径、不同桩长，进行承载力计算分析
+    for l in range(L_min_input, L_max_input + 1, 1): #循环用户输入的最短～最长桩长范围，计算Ra
+        table = Bored_Pile(D_input, l, level_input).pile_capacity()
+        summary_table = pd.DataFrame({'BH': [], 'L': [], 'Quk': [], 'Ra': []})
+        summary_table = summary_table.append(table)#创建钻孔、桩长、Ra大表
+
+    print('-------Summary_Table-------')
+    print(summary_table)
+    Ra_min = summary_table.groupby('L').apply(lambda t: t[t.Ra == t.Ra.min()]) #找出每种桩长对应最小Ra，并列表，要求能够显示最小值对应的BH
+    print('-------Ra_min_Table--------')
+    print(Ra_min)
+    plt_Ra_vs_L = pd.DataFrame(Ra_min.loc[:, ['L', 'Ra']].values) #提取groupby返回结果中的两列，并重新转化为Dataframe以去除multipleindex
+    plt_Ra_vs_L.columns = ['L', 'Ra'] #指定列名
+    plt_Ra_vs_L.set_index(['L'], inplace=True) #指定index
+    plt_Ra_vs_L.plot() #打印图表
+    plt.show()
+
+
+D_list_user_input = [0.6, 0.8, 1, 1.2]
+L_min_user_input = 18
+L_max_user_input = 20
+level_user_input = 4.5
 # todo: 用户输入初始桩径、桩长、桩顶标高
 
 
-def pile_analyze():
-    for l in range(L_min, L_max + 1, 1):
-        Bored_Pile(D, l, level).pile_capacity()
-    summary_table = pd.DataFrame({'桩长L': Pile_length_list, 'Quk': Quk_list, 'Ra': Ra_list})
+def Ra_D_L_analyze():
+    for D in D_list_user_input:
+        print('Dia=' + str(D))
+        pile_length_analyze(L_min_user_input, L_max_user_input, D, level_user_input)
+        global Pile_length_list
+        Pile_length_list = []
+        global Quk_list
+        Quk_list = []
+        global Ra_list
+        Ra_list = []
+        global BH
+        BH = []
 
-    print(summary_table)
-
-
-pile_analyze()
+Ra_D_L_analyze()
