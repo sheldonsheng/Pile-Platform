@@ -103,13 +103,11 @@ def compute_all_dia(L_min_input, L_max_input, D_list, level_input): #计算某�
         summary_table_dia_x = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
                                                                    level_input)
         summary_table_dia_x.reset_index(drop=True, inplace=True)
-        print(summary_table_dia_x)
-        min_capacity_with_D_l = summary_table_dia_x.groupby(['L']).min()
-        min_row_id = summary_table_dia_x.groupby(['L']).idxmin()
-        min_id = min_row_id['Ra'].values
-        print(min_id)
+        min_capacity_with_D_l = summary_table_dia_x.groupby(['L']).min() #根据L分组，找出Ra最小行
+        find_min_row_id = summary_table_dia_x.groupby(['L']).idxmin() #根据L分组，找出Ra最小行行号，返回的是Dataframe
+        min_id_list = find_min_row_id['Ra'].values #将Ra列最小行行号返回形成列表
         dic = {}
-        for i in min_id:
+        for i in min_id_list:
             min_capacity_BH_log = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
                                                                    level_input)['BH'].iloc[i]
             pile_length_list = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
