@@ -59,8 +59,10 @@ class BoredPile:
             'tip_support_col']  # 计算桩端阻力列
         return soil_thickness_by_type['skin_friction'].sum() + soil_thickness_by_type['tip_capacity'].sum() #求单桩极限承载力
 
+# ------------------------------------------------Defined 2 Class above----------------------------------------------------
 
-def compute_quks_with_all_BH_log(d_input, l, level_input):
+
+def compute_quks_with_all_BH_log(d_input, l, level_input): #计算特定桩径、桩长、桩顶标高的单桩承载力
     soil_parameters_file = 'soil_parameters.csv'
     bored_pile = BoredPile(d_input, l, level_input)
 
@@ -79,27 +81,56 @@ def compute_quks_with_all_BH_log(d_input, l, level_input):
             return pile_bhs, pile_quks, pile_ras
 
 
-def compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input, level_input):
-    summary_table_dia = pd.DataFrame({'BH': [], 'L': [], 'Quk': [], 'Ra': []})
+def compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input, level_input): #计算某桩长范围内，特定桩径、桩顶标高的单桩承载力
+    summary_table_dia_x = pd.DataFrame({'BH': [], 'L': [], 'Quk': [], 'Ra': []})
 
     for l in range(L_min_input, L_max_input + 1, 1): #循环用户输入的最短～最长桩长范围，计算Ra
         bhs, quks, ras = compute_quks_with_all_BH_log(D_input, l, level_input)
-        summary_table_dia = summary_table_dia.append(pd.DataFrame({
+        summary_table_dia_x = summary_table_dia_x.append(pd.DataFrame({
             'BH': bhs,
             'Quk': quks,
             'Ra': ras,
             'L': l
         }))#创建钻孔、桩长、Ra大表
 
-    print(summary_table_dia)
+    return summary_table_dia_x
 
 
-def compute_all_dia(L_min_input, L_max_input, D_list, level_input):
+def compute_all_dia(L_min_input, L_max_input, D_list, level_input): #计算某桩径列表内不同桩径，某桩长范围内、特定桩顶标高下的单桩承载力
     for D in D_list:
         D_input = D
         print('Dia = ' + str(D_input))
-        compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input, level_input)
+        summary_table_dia_x = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
+                                                                   level_input)
+        summary_table_dia_x.reset_index(drop=True, inplace=True)
+        print(summary_table_dia_x)
+        min_capacity_with_D_l = summary_table_dia_x.groupby(['L']).min()
+        min_row_id = summary_table_dia_x.groupby(['L']).idxmin()
+        min_id = min_row_id['Ra'].values
+        print(min_id)
+        dic = {}
+        for i in min_id:
+            min_capacity_BH_log = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
+                                                                   level_input)['BH'].iloc[i]
+            pile_length_list = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
+                                                                   level_input)['L'].iloc[i]
+            dic['L=' + str(pile_length_list) + ', min pile capacity - BH log'] = min_capacity_BH_log
+
+        print(min_capacity_with_D_l)
+        print(dic)
+
+
+#--------------------------------------Defined 3 basic method for compute pile capacity above---------------------------------
 
 
 
+
+
+#--------------------------------------Defined plotting method for pile capacity above---------------------------------
+
+
+
+#--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
 compute_all_dia(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+
+#--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
