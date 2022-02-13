@@ -152,7 +152,9 @@ def cost_analyze(unit_price, D_list, compute_all_dia_table, building: Building):
                                                                       compute_all_dia_table['Dia=' + str(D) +
                                                                                             ', total_pile_num']
         compute_all_dia_table['Dia=' + str(D) + 'm, kN/estimate cost'] = \
-             compute_all_dia_table['Dia=' + str(D)] / compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost']
+             compute_all_dia_table['Dia=' + str(D)] * compute_all_dia_table['Dia=' + str(D) +', total_pile_num']\
+             / compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost']
+    compute_all_dia_table.to_csv('compute_all_dia_table.csv')
     return compute_all_dia_table
 
 
@@ -186,16 +188,16 @@ def plot_cost_analyze(input_table, D_list):
 
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
-core_table = compute_all_dia(35, 66, [0.6, 0.8, 1.0, 1.2], -3.1)
+core_table = compute_all_dia(60, 61, [0.6, 0.8, 1.0, 1.2], -3.1)
 print(core_table)
 plot_Ra_vs_L(core_table, [0.6, 0.8, 1.0, 1.2])
 
 building = Building(26, 1, 472.81, 500, 15, 20)
-cost_analyze_table = cost_analyze(1.5, [0.6, 0.8, 1.0, 1.2], core_table, building)
+cost_analyze_table = cost_analyze(0.15, [0.6, 0.8, 1.0, 1.2], core_table, building)
 print(cost_analyze_table['Dia=0.6, total_pile_num'])
 plot_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
 
-find_min_pile_cap_BH = find_BH_for_min_pile_capacity(35, 66, [0.6, 0.8, 1.0, 1.2], -3.1)
+find_min_pile_cap_BH = find_BH_for_min_pile_capacity(60, 61, [0.6, 0.8, 1.0, 1.2], -3.1)
 print(find_min_pile_cap_BH)
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
