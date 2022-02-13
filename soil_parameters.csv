@@ -1,4 +1,14 @@
 info,pre-cast_pile_fsi ,bored_pile_fsi,pre-cast_pile_fp ,bored_pile_fp
-soil_layer1,5,4,0,0
-soil_layer2,10,8,0,0
-soil_layer3,20,15,1200,800
+soil_layer1,0,0,0,0
+soil_layer3_1,6,4,0,0
+soil_layer3_1j,12,10,0,0
+soil_layer3_2,7,6,0,0
+soil_layer3_3,14,12,0,0
+soil_layer4,25,23,0,0
+soil_layer5,21,19,0,0
+soil_layer6_2,26,24,1000,500
+soil_layer6_3,27,25,1100,550
+soil_layer7_1,48,42,4000,2000
+soil_layer7_2,30,28,1300,650
+soil_layer8_1,50,45,4200,2100
+soil_layer8_2,0,0,0,0

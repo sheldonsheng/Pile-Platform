@@ -186,16 +186,16 @@ def plot_cost_analyze(input_table, D_list):
 
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
-core_table = compute_all_dia(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+core_table = compute_all_dia(35, 66, [0.6, 0.8, 1.0, 1.2], -3.1)
 print(core_table)
 plot_Ra_vs_L(core_table, [0.6, 0.8, 1.0, 1.2])
 
-building = Building(33, 1, 300, 400, 15, 20)
+building = Building(26, 1, 472.81, 500, 15, 20)
 cost_analyze_table = cost_analyze(1.5, [0.6, 0.8, 1.0, 1.2], core_table, building)
 print(cost_analyze_table['Dia=0.6, total_pile_num'])
 plot_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
 
-find_min_pile_cap_BH = find_BH_for_min_pile_capacity(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+find_min_pile_cap_BH = find_BH_for_min_pile_capacity(35, 66, [0.6, 0.8, 1.0, 1.2], -3.1)
 print(find_min_pile_cap_BH)
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
