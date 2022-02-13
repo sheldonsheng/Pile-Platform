@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 
 class SoilStrata:
@@ -59,6 +58,17 @@ class BoredPile:
         soil_thickness_by_type['tip_capacity'] = soil_strata.soil_parameters['bored_pile_fp'] * pile_tip_area * soil_thickness_by_type[
             'tip_support_col']  # 计算桩端阻力列
         return soil_thickness_by_type['skin_friction'].sum() + soil_thickness_by_type['tip_capacity'].sum() #求单桩极限承载力
+
+
+class Building:
+    def __init__(self, upper_floors, basement_floors, area_per_floor, basement_area, upper_floor_load,
+                 basement_floor_load):
+        self.upper_floors = upper_floors
+        self.basement_floors = basement_floors
+        self.area_per_floor = area_per_floor
+        self.basement_area = basement_area
+        self.upper_floor_load = upper_floor_load
+        self.basement_floor_load = basement_floor_load
 
 # ------------------------------------------------Defined 2 Class above----------------------------------------------------
 
@@ -132,10 +142,15 @@ def find_BH_for_min_pile_capacity(L_min_input, L_max_input, D_list, level_input)
     return min_cap_BH_dic
 
 
-def cost_analyze(unit_price, D_list, compute_all_dia_table):
+def cost_analyze(unit_price, D_list, compute_all_dia_table, building: Building):
+    total_load = building.area_per_floor * building.upper_floor_load * building.upper_floors + building.basement_area * \
+                 building.basement_floors * building.basement_floor_load
     for D in D_list:
+        compute_all_dia_table['Dia=' + str(D) +', total_pile_num'] = total_load / compute_all_dia_table['Dia=' + str(D)]
         compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost'] = 3.14 * D**2 / 4 * \
-                                                                      compute_all_dia_table.index * unit_price
+                                                                      compute_all_dia_table.index * unit_price * \
+                                                                      compute_all_dia_table['Dia=' + str(D) +
+                                                                                            ', total_pile_num']
         compute_all_dia_table['Dia=' + str(D) + 'm, kN/estimate cost'] = \
              compute_all_dia_table['Dia=' + str(D)] / compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost']
     return compute_all_dia_table
@@ -175,8 +190,9 @@ core_table = compute_all_dia(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
 print(core_table)
 plot_Ra_vs_L(core_table, [0.6, 0.8, 1.0, 1.2])
 
-cost_analyze_table = cost_analyze(1.5, [0.6, 0.8, 1.0, 1.2], core_table)
-print(cost_analyze_table)
+building = Building(33, 1, 300, 400, 15, 20)
+cost_analyze_table = cost_analyze(1.5, [0.6, 0.8, 1.0, 1.2], core_table, building)
+print(cost_analyze_table['Dia=0.6, total_pile_num'])
 plot_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
 
 find_min_pile_cap_BH = find_BH_for_min_pile_capacity(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
