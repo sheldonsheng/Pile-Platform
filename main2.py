@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 
 class SoilStrata:
@@ -97,38 +98,88 @@ def compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input, level_
 
 
 def compute_all_dia(L_min_input, L_max_input, D_list, level_input): #计算某桩径列表内不同桩径，某桩长范围内、特定桩顶标高下的单桩承载力
+    compute_all_dia_table = pd.DataFrame()
+
     for D in D_list:
         D_input = D
-        print('Dia = ' + str(D_input))
         summary_table_dia_x = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
                                                                    level_input)
         summary_table_dia_x.reset_index(drop=True, inplace=True)
-        min_capacity_with_D_l = summary_table_dia_x[['L', 'Quk', 'Ra']].groupby(['L']).min() #根据L分组，找出Ra最小行
+        min_capacity_with_D_l = summary_table_dia_x[['L', 'Quk', 'Ra']].groupby(['L']).min() #根据L分组，找出Ra最小行，形成成果表（特定直径，不同桩长的Ra）
+        min_capacity_with_D_l_dia_x = min_capacity_with_D_l['Ra'].values
+        compute_all_dia_table['Dia=' + str(D_input)] = min_capacity_with_D_l_dia_x
+    plt_table_index = range(L_min_input, L_max_input+1, 1)
+    compute_all_dia_table['pile_length'] = plt_table_index
+    compute_all_dia_table.set_index('pile_length', inplace=True)
+    return compute_all_dia_table
+
+
+def find_BH_for_min_pile_capacity(L_min_input, L_max_input, D_list, level_input):
+    for D in D_list:
+        D_input = D
+        summary_table_dia_x = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
+                                                                   level_input)
+        summary_table_dia_x.reset_index(drop=True, inplace=True)
         find_min_row_id = summary_table_dia_x[['L', 'Quk', 'Ra']].groupby(['L']).idxmin() #根据L分组，找出Ra最小行行号，返回的是Dataframe
-        min_id_list = find_min_row_id['Ra'].values #将Ra列最小行行号返回形成列表
-        dic = {}
+        min_id_list = find_min_row_id['Ra'].values #将Ra列(此时Ra列内元素为最小行行号)返回形成列表
+        min_cap_BH_dic = {}
         for i in min_id_list:
             min_capacity_BH_log = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
                                                                    level_input)['BH'].iloc[i]
             pile_length_list = compute_all_pile_length_with_x_dia(L_min_input, L_max_input, D_input,
                                                                    level_input)['L'].iloc[i]
-            dic['L=' + str(pile_length_list) + ', min pile capacity - BH log'] = min_capacity_BH_log
+            min_cap_BH_dic['L=' + str(pile_length_list) + ', min pile capacity - BH log'] = min_capacity_BH_log
+    return min_cap_BH_dic
 
-        print(min_capacity_with_D_l)
-        print(dic)
+
+def cost_analyze(unit_price, D_list, compute_all_dia_table):
+    for D in D_list:
+        compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost'] = 3.14 * D**2 / 4 * \
+                                                                      compute_all_dia_table.index * unit_price
+        compute_all_dia_table['Dia=' + str(D) + 'm, kN/estimate cost'] = \
+             compute_all_dia_table['Dia=' + str(D)] / compute_all_dia_table['Dia=' + str(D) + 'm, estimate cost']
+    return compute_all_dia_table
 
 
 #--------------------------------------Defined 3 basic method for compute pile capacity above---------------------------------
 
 
+def plot_Ra_vs_L(input_table, D_list):
+    fig, ax = plt.subplots(figsize=(5, 5), layout='constrained')
+    for D in D_list:
+        ax.plot(input_table.index, input_table['Dia=' + str(D)], 'o-', label='Dia=' + str(D))
+    ax.set_xlabel('Pile Length')
+    ax.set_ylabel('Ra')
+    ax.set_title('Pile Length vs Ra - with Different Dia')
+    ax.markers = ()
+    ax.legend()
+    plt.show()
 
 
+def plot_cost_analyze(input_table, D_list):
+    fig, ax = plt.subplots(figsize=(5, 5), layout='constrained')
+    for D in D_list:
+        ax.plot(input_table.index, input_table['Dia=' + str(D) + 'm, kN/estimate cost'], 'o-', label='Dia=' + str(D))
+    ax.set_xlabel('Pile Length')
+    ax.set_ylabel('kN/estimate cost (kN / W yuan)')
+    ax.set_title('Pile Length vs kN/estimate cost - with Different Dia')
+    ax.legend()
+    plt.show()
 
 #--------------------------------------Defined plotting method for pile capacity above---------------------------------
 
 
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
-compute_all_dia(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+core_table = compute_all_dia(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+print(core_table)
+plot_Ra_vs_L(core_table, [0.6, 0.8, 1.0, 1.2])
+
+cost_analyze_table = cost_analyze(1.5, [0.6, 0.8, 1.0, 1.2], core_table)
+print(cost_analyze_table)
+plot_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
+
+find_min_pile_cap_BH = find_BH_for_min_pile_capacity(18, 20, [0.6, 0.8, 1.0, 1.2], 4.5)
+print(find_min_pile_cap_BH)
 
 #--------------------------------------***用户输入区，调用函数***----------------------------------------------------------
