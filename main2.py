@@ -173,7 +173,7 @@ def plot_Ra_vs_L(input_table, D_list):
     plt.show()
 
 
-def plot_cost_analyze(input_table, D_list):
+def plot_unit_cap_cost_analyze(input_table, D_list):
     fig, ax = plt.subplots(figsize=(5, 5), layout='constrained')
     for D in D_list:
         ax.plot(input_table.index, input_table['Dia=' + str(D) + 'm, kN/estimate cost'], 'o-', label='Dia=' + str(D))
@@ -182,6 +182,17 @@ def plot_cost_analyze(input_table, D_list):
     ax.set_title('Pile Length vs kN/estimate cost - with Different Dia')
     ax.legend()
     plt.show()
+
+def plot_total_cost_analyze(input_table, D_list):
+    fig, ax = plt.subplots(figsize=(5, 5), layout='constrained')
+    for D in D_list:
+        ax.plot(input_table.index, input_table['Dia=' + str(D) + 'm, estimate cost'], 'o-', label='Dia=' + str(D))
+    ax.set_xlabel('Pile Length')
+    ax.set_ylabel('estimate total cost (W yuan)')
+    ax.set_title('Pile Length vs estimate total cost - with Different Dia')
+    ax.legend()
+    plt.show()
+
 
 #--------------------------------------Defined plotting method for pile capacity above---------------------------------
 
@@ -194,8 +205,12 @@ plot_Ra_vs_L(core_table, [0.6, 0.8, 1.0, 1.2])
 
 building = Building(26, 1, 472.81, 500, 15, 20)
 cost_analyze_table = cost_analyze(0.15, [0.6, 0.8, 1.0, 1.2], core_table, building)
-print(cost_analyze_table['Dia=0.6, total_pile_num'])
-plot_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
+
+plot_unit_cap_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
+plot_total_cost_analyze(cost_analyze_table, [0.6, 0.8, 1.0, 1.2])
+
+
+
 
 # find_min_pile_cap_BH = find_BH_for_min_pile_capacity(50, 65, [0.6, 0.8, 1.0, 1.2], -3.1)
 # print(find_min_pile_cap_BH)
